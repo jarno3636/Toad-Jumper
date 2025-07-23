@@ -1,45 +1,99 @@
-import k from "../kaplay.js";
+import k from "../kaplay"
+import { makePlatform } from "../objects/platform"
+import { makePlayer } from "../objects/player"
+import { makeRocketIndicator } from "../objects/rocketIndicator"
+import { makeCloud } from "../objects/cloud"
+import { makeScore } from "../objects/score"
+import { pb } from "../pocketbase"
+import { makeControls } from "../objects/controls"
 
-// Replace "player" with your frog sprite
-const player = add([
-  sprite("frog_blue"),    // Change to "frog_green" or "frog_red" for other skins
-  pos(120, 100),
-  area(),
-  body(),
-  origin("center"),
-  "player"
-]);
+// Add your background sprite if you want it always visible
+k.add([
+    k.sprite("background"),
+    k.pos(0, 0),
+    k.layer("bg"),
+    { z: -100 }
+])
 
-// Replace pad with your lily pad
-function spawnPad(x, y) {
-  return add([
-    sprite("lily_pad"),
-    pos(x, y),
-    area(),
-    solid(),
-    "pad"
-  ]);
-}
+k.scene("game", () => {
+    k.setGravity(1200)
 
-// If you have collectibles (example: triangle)
-function spawnCollectible(x, y, type) {
-  let spriteName = "collectible_triangle";
-  if (type === "swirl") spriteName = "collectible_swirl";
-  if (type === "leaf") spriteName = "collectible_leaf";
-  return add([
-    sprite(spriteName),
-    pos(x, y),
-    area(),
-    "collectible"
-  ]);
-}
+    let cloudStep = 1
+    for (let _ = 0; _ < 5; _++) {
+        k.add(makeCloud(k.rand(k.width()), k.rand(k.height())))
+    }
 
-// If you use a background image
-add([
-  sprite("background"),
-  pos(0, 0),
-  layer("bg"),
-  "background"
-]);
+    k.loop(3, () => {
+        if (k.chance(0.7))
+            k.add(makeCloud(null, k.rand(k.camPos().y + k.rand(k.height() / 2) * k.choose([1, -1]))))
+    })
 
-// ...the rest of your game logic here...
+    // Use your frog skin here ("frog_blue", "frog_green", etc)
+    const player = k.add(makePlayer("frog_blue"))
+    const score = k.add(makeScore())
+    const indicator = k.add(makeRocketIndicator())
+
+    if (k.width() <= 600) {
+        makeControls().forEach(control => k.add(control))
+    }
+
+    // Use your lily pad art ("lily_pad" or "lily_pad_cracked")
+    let lastPlatform = k.add(makePlatform("lily_pad"))
+
+    player.onUpdate(() => {
+        if (-lastPlatform.pos.y < player.score) {
+            lastPlatform = k.add(makePlatform("lily_pad", lastPlatform.pos, player.score < 400, player.score < 400))
+        }
+        score.text = Math.trunc(player.score)
+        indicator.check(player.score)
+        k.camPos(player.camPos)
+        const step = Math.ceil(Math.abs(player.pos.y - k.height()) / k.height())
+        if (step === cloudStep) {
+            const end = -k.height() * cloudStep
+            for (let _ = 0; _ < 5; _++) {
+                k.add(makeCloud(k.rand(k.width() / 2, k.width()), k.rand(end + k.height(), end)))
+            }
+            cloudStep++
+        }
+    })
+    k.onKeyPress('space', () => {
+        if (!indicator.available) return
+        indicator.rocketUsed(player.score)
+        player.rocketJump()
+    })
+    k.onKeyDown('left', () => {
+        player.moveLeft()
+    })
+    k.onKeyDown('right', () => {
+        player.moveRight()
+    })
+    k.onMouseDown(() => {
+        const mousePosition = k.mousePos()
+        if (mousePosition.y < k.height() / 2) return
+        if (mousePosition.x < k.width() / 2) player.moveLeft()
+        else player.moveRight()
+    })
+    k.onMousePress(() => {
+        const mousePosition = k.mousePos()
+        if (mousePosition.y < k.height() / 2) {
+            if (!indicator.available) return
+            indicator.rocketUsed(player.score)
+            player.rocketJump()
+        }
+    })
+
+    let topScorers = null
+
+    pb.collection('scores').getList(1, 7, {
+        sort: '-score',
+        filter: 'created >= @todayStart && created < @todayEnd'
+    }).then(data => {
+        topScorers = data.items
+    }).catch(e => {
+        console.log("Could not load leaderboard!")
+    })
+
+    player.onDestroy(() => {
+        k.go('over', score.text, topScorers)
+    })
+})
