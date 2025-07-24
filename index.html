@@ -1,28 +1,24 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <title>Dot's Adventure</title>
-  <meta name="title" content="Dot's Adventure">
-  <meta name="description" content="Dot is on an adventure. But how far can it go?">
-
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="icon" href="/favicon.ico" sizes="48x48">
-  <link rel="icon" href="/dotventure.svg" sizes="any" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
-
-  <meta property="og:title" content="Dot's Adventure" />
-  <meta property="og:description" content="Dot is on an adventure. But how far can it go?" />
-  <meta property="og:image" content="https://dot.sh4jid.me/banner.png" />
-  <meta property="og:url" content="https://dot.sh4jid.me" />
-
-  <meta name="theme-color" content="#cceaf4" />
+  <title>Toad Jumper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <div id="start-screen">
+    <img id="logo" alt="Toad Jumper Logo" />
+    <div id="skin-picker">
+      <button data-skin="blue" class="active">Blue</button>
+      <button data-skin="green">Green</button>
+      <button data-skin="red">Red</button>
+    </div>
+    <button id="startBtn">Start</button>
+  </div>
+  <canvas id="gameCanvas" width="400" height="600" style="display:none;"></canvas>
+
+  <!-- Load your game as ES modules -->
   <script type="module" src="main.js"></script>
 </body>
-
 </html>
