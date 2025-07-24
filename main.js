@@ -1,9 +1,14 @@
-import k from "./game/kaplay"
-import './style.css'
+// Tell us it’s loaded:
+console.log("main.js running");
 
-import "./game/assets"
-import "./game/scenes/start"
-import "./game/scenes/game"
-import "./game/scenes/over"
+// Import Kaboom wrapper
+import k from './game/kaplay.js';
 
-k.go('start')
+// Load your assets and scenes
+import './game/assets.js';
+import './game/scenes/start.js';
+import './game/scenes/game.js';
+import './game/scenes/over.js';
+
+// Kick off the start scene
+k.go('start');
